@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'calorie_screen.dart';
 import 'chart_screen.dart';
 import 'workout_screen.dart';
 import 'workout_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'notification_helper.dart';
 
 class MyHomePage extends StatefulWidget {
   @override
@@ -23,7 +21,6 @@ class MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    NotificationHelper.setup();
     loadWorkouts();
   }
 
@@ -92,7 +89,6 @@ class MyHomePageState extends State<MyHomePage> {
       workouts.add(workout);
     });
     saveWorkouts();
-    NotificationHelper.checkWorkout(workouts);
   }
 
   @override
@@ -100,7 +96,6 @@ class MyHomePageState extends State<MyHomePage> {
     // list of screens - pass workouts to all screens that need it
     final List<Widget> screens = [
       WorkoutScreen(workouts: workouts, onAddWorkout: addWorkout, onDeleteWorkout: saveWorkouts),
-      CalorieScreen(),
       ChartScreen(workouts: workouts),
     ];
 
@@ -129,10 +124,6 @@ class MyHomePageState extends State<MyHomePage> {
           BottomNavigationBarItem(
             icon: Icon(Icons.fitness_center),
             label: 'Workouts',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.local_fire_department),
-            label: 'Calories',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.show_chart),

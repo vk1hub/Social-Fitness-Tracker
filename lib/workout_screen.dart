@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
-import 'preset_routines.dart';
 import 'add_exercise_screen.dart';
 import 'workout_model.dart';
 
@@ -52,23 +51,6 @@ class WorkoutScreenState extends State<WorkoutScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Workout Log'),
-        actions: [
-          // INFO BUTTON
-          IconButton(
-            icon: Icon(Icons.info_outline),
-            onPressed: () {
-              Navigator.push(
-                context,
-                PageRouteBuilder(
-                  pageBuilder: (context, animation, secondaryAnimation) => PresetRoutinesScreen(),
-                  transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                    return FadeTransition(opacity: animation, child: child);
-                  },
-                ),
-              );
-            },
-          ),
-        ],
       ),
       body: Column(
         children: [
