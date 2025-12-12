@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'home_screen.dart';
 import 'profile_setup_screen.dart';
 
 class RegisterScreen extends StatefulWidget {

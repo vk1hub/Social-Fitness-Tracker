@@ -3,6 +3,8 @@ import 'chart_screen.dart';
 import 'workout_screen.dart';
 import 'workout_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'profile_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class MyHomePage extends StatefulWidget {
   @override
@@ -32,18 +34,18 @@ class MyHomePageState extends State<MyHomePage> {
 
   void loadWorkouts() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    
+
     // get saved lists
     List<String>? types = prefs.getStringList('workout_types');
     List<String>? names = prefs.getStringList('workout_names');
     List<String>? details = prefs.getStringList('workout_details');
     List<String>? dates = prefs.getStringList('workout_dates');
-    
+
     // to stop crashing from no info
     if (types == null || names == null || details == null || dates == null) {
       return;
     }
-    
+
     // Build workouts from the lists
     List<WorkoutModel> loadedWorkouts = [];
     for (int i = 0; i < types.length; i++) {
@@ -55,7 +57,7 @@ class MyHomePageState extends State<MyHomePage> {
       );
       loadedWorkouts.add(workout);
     }
-    
+
     setState(() {
       workouts = loadedWorkouts;
     });
@@ -63,12 +65,12 @@ class MyHomePageState extends State<MyHomePage> {
 
   void saveWorkouts() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    
+
     List<String> types = [];
     List<String> names = [];
     List<String> details = [];
     List<String> dates = [];
-    
+
     // Fill the lists with data from workouts
     for (int i = 0; i < workouts.length; i++) {
       types.add(workouts[i].type);
@@ -76,7 +78,7 @@ class MyHomePageState extends State<MyHomePage> {
       details.add(workouts[i].details);
       dates.add(workouts[i].date.toString());
     }
-    
+
     await prefs.setStringList('workout_types', types);
     await prefs.setStringList('workout_names', names);
     await prefs.setStringList('workout_details', details);
@@ -95,8 +97,13 @@ class MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     // list of screens - pass workouts to all screens that need it
     final List<Widget> screens = [
-      WorkoutScreen(workouts: workouts, onAddWorkout: addWorkout, onDeleteWorkout: saveWorkouts),
+      WorkoutScreen(
+        workouts: workouts,
+        onAddWorkout: addWorkout,
+        onDeleteWorkout: saveWorkouts,
+      ),
       ChartScreen(workouts: workouts),
+      ProfileScreen(userId: FirebaseAuth.instance.currentUser!.uid),  // NEW: Add profile screen
     ];
 
     return Scaffold(
@@ -117,10 +124,14 @@ class MyHomePageState extends State<MyHomePage> {
           setState(() {
             currentPage = index;
           });
-          pageController.animateToPage(index, duration: Duration(milliseconds: 300), curve: Curves.fastEaseInToSlowEaseOut,);
+          pageController.animateToPage(
+            index,
+            duration: Duration(milliseconds: 300),
+            curve: Curves.fastEaseInToSlowEaseOut,
+          );
         },
         // Bottom navigation tabs
-        items: const[
+        items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.fitness_center),
             label: 'Workouts',
@@ -129,6 +140,10 @@ class MyHomePageState extends State<MyHomePage> {
             icon: Icon(Icons.show_chart),
             label: 'Progress',
           ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profile',
+          ),  // NEW: Add profile tab
         ],
       ),
     );
