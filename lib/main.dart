@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
-import 'firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
-
+import 'firebase_options.dart';
+import 'login_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,7 +12,6 @@ void main() async {
 }
 
 class FitnessTrackerApp extends StatelessWidget {
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -23,7 +21,7 @@ class FitnessTrackerApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         scaffoldBackgroundColor: Colors.white,
       ),
-      home: MyHomePage(),
+      home: LoginScreen(),
       debugShowCheckedModeBanner: false,
     );
   }
