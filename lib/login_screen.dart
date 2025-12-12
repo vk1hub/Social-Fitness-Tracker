@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'home_screen.dart';
+import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -36,6 +37,8 @@ class LoginScreenState extends State<LoginScreen> {
       );
     } on FirebaseAuthException catch (e) {
       String message = 'An error occurred';
+
+      // handle error messages
       if (e.code == 'user-not-found') {
         message = 'No user found with this email';
       } else if (e.code == 'wrong-password') {
@@ -110,6 +113,10 @@ class LoginScreenState extends State<LoginScreen> {
                   
                   GestureDetector(
                     onTap: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => RegisterScreen()),
+                      );
                     },
                     child: Container(
                       width: double.infinity,
