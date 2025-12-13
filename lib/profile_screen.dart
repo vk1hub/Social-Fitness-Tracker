@@ -140,6 +140,86 @@ class ProfileScreenState extends State<ProfileScreen> {
                     ],
                   ),
                 ),
+                SizedBox(height: 30),
+              
+              Text(
+                'Recent Workouts',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 12),
+              
+              StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(widget.userId)
+                    .collection('workouts')
+                    .orderBy('date', descending: true)
+                    .limit(5)
+                    .snapshots(),
+                builder: (context, workoutSnapshot) {
+                  if (workoutSnapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  }
+
+                  if (!workoutSnapshot.hasData || workoutSnapshot.data!.docs.isEmpty) {
+                    return Center(
+                      child: Text('No workouts yet'),
+                    );
+                  }
+
+                  return ListView.builder(
+                    shrinkWrap: true,
+                    physics: NeverScrollableScrollPhysics(),
+                    itemCount: workoutSnapshot.data!.docs.length,
+                    itemBuilder: (context, index) {
+                      var workout = workoutSnapshot.data!.docs[index];
+                      var workoutData = workout.data() as Map<String, dynamic>;
+
+                      return Container(
+                        margin: EdgeInsets.only(bottom: 12),
+                        padding: EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.black),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              workoutData['type'] ?? '',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              workoutData['name'] ?? '',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(workoutData['details'] ?? ''),
+                            
+                            if (workoutData['photoUrl'] != null && workoutData['photoUrl'].isNotEmpty)
+                              Padding(
+                                padding: EdgeInsets.only(top: 12),
+                                child: Image.network(
+                                  workoutData['photoUrl'],
+                                  width: double.infinity,
+                                  height: 200,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                },
+                ),
               ],
             ),
           );
