@@ -6,10 +6,10 @@ import 'workout_model.dart';
 class WorkoutScreen extends StatefulWidget {
   final List<WorkoutModel> workouts;
   final Function(WorkoutModel) onAddWorkout;
-  final Function onDeleteWorkout;
+  final Function(WorkoutModel) onDeleteWorkout;
 
   WorkoutScreen({
-    required this.workouts, 
+    required this.workouts,
     required this.onAddWorkout,
     required this.onDeleteWorkout,
   });
@@ -38,10 +38,7 @@ class WorkoutScreenState extends State<WorkoutScreen> {
   }
 
   void deleteWorkout(WorkoutModel workout) {
-    setState(() {
-      widget.workouts.remove(workout);
-    });
-    widget.onDeleteWorkout();
+    widget.onDeleteWorkout(workout);
   }
 
   @override
@@ -49,9 +46,7 @@ class WorkoutScreenState extends State<WorkoutScreen> {
     List<WorkoutModel> todaysWorkouts = getWorkoutsForSelectedDate();
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Workout Log'),
-      ),
+      appBar: AppBar(title: Text('Workout Log')),
       body: Column(
         children: [
           // calendar widget
@@ -119,10 +114,7 @@ class WorkoutScreenState extends State<WorkoutScreen> {
                                     SizedBox(width: 8),
                                     GestureDetector(
                                       onTap: () => deleteWorkout(workout),
-                                      child: Icon(
-                                        Icons.delete,
-                                        size: 20,
-                                      ),
+                                      child: Icon(Icons.delete, size: 20),
                                     ),
                                   ],
                                 ),
@@ -138,6 +130,19 @@ class WorkoutScreenState extends State<WorkoutScreen> {
                             ),
                             SizedBox(height: 4),
                             Text(workout.details),
+
+                            // show photos on workout screen
+                            if (workout.photoUrl != null &&
+                                workout.photoUrl!.isNotEmpty)
+                              Padding(
+                                padding: EdgeInsets.only(top: 12),
+                                child: Image.network(
+                                  workout.photoUrl!,
+                                  width: double.infinity,
+                                  height: 200,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
                           ],
                         ),
                       );

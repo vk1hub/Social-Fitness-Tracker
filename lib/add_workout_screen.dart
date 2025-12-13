@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'workout_model.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:io';
 
 class AddWorkoutScreen extends StatefulWidget {
   final Function(WorkoutModel)? onAddWorkout;
@@ -20,6 +24,10 @@ class AddWorkoutScreenState extends State<AddWorkoutScreen> {
 
   // List to store all sets
   List<Map<String, String>> sets = [];
+
+  // Image handling
+  File? selectedImage;
+  bool isLoading = false;
 
   // Function to add a set
   void addSet() {
@@ -57,8 +65,40 @@ class AddWorkoutScreenState extends State<AddWorkoutScreen> {
     });
   }
 
+  Future<void> pickImage() async {
+  final ImagePicker picker = ImagePicker();
+  final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+  if (image != null) {
+    setState(() {
+      selectedImage = File(image.path);
+    });
+  }
+}
+
+Future<String?> uploadImage() async {
+  if (selectedImage == null) return null;
+
+  try {
+    String userId = FirebaseAuth.instance.currentUser!.uid;
+    String fileName = 'workout_${DateTime.now().millisecondsSinceEpoch}.jpg';
+    Reference storageRef = FirebaseStorage.instance
+        .ref()
+        .child('workouts')
+        .child(userId)
+        .child(fileName);
+
+    await storageRef.putFile(selectedImage!);
+    String downloadUrl = await storageRef.getDownloadURL();
+    return downloadUrl;
+  } catch (e) {
+    print('Error uploading image: $e');
+    return null;
+  }
+}
+
   // function to save a workout
-  void saveWorkout() {
+  Future<void> saveWorkout() async {
     if (sets.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Please add at least one set')),
@@ -106,12 +146,19 @@ class AddWorkoutScreenState extends State<AddWorkoutScreen> {
       details += 'Total Time: ${timeController.text} minutes';
     }
 
+    setState(() {
+      isLoading = true;
+    });
+
+    String? photoUrl = await uploadImage(); 
+
     // Create workout model
     WorkoutModel workout = WorkoutModel(
       type: 'Weight Training',
       name: workoutName,
       details: details.trim(),
       date: widget.selectedDate,
+      photoUrl: photoUrl,
     );
 
     // Call the callback to add workout if it exists
@@ -122,6 +169,11 @@ class AddWorkoutScreenState extends State<AddWorkoutScreen> {
     } else {
       Navigator.pop(context);
     }
+
+    setState(() {
+      isLoading = false;
+    });
+
   }
 
   @override
@@ -215,6 +267,34 @@ class AddWorkoutScreenState extends State<AddWorkoutScreen> {
               ),
             ),
             SizedBox(height: 20),
+
+            if (selectedImage != null)
+              Container(height: 150, 
+                width: double.infinity, 
+                margin: EdgeInsets.only(bottom: 10), 
+                child: Image.file(
+                  selectedImage!,
+                  fit: BoxFit.cover
+                ),
+              ),
+            
+            GestureDetector(
+              onTap: pickImage,
+              child: Container(
+                width: double.infinity,
+                padding: EdgeInsets.symmetric(vertical: 15),
+                margin: EdgeInsets.only(bottom: 10),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.black),
+                ),
+                child: Center(
+                  child: Text(
+                    selectedImage == null ? 'Add Photo (Optional)' : 'Change Photo',
+                      style: TextStyle(fontSize: 16, color: Colors.black),
+                    ),
+                  ),
+                ),
+              ),
             
             // Action buttons
             Row(
@@ -240,17 +320,24 @@ class AddWorkoutScreenState extends State<AddWorkoutScreen> {
                   ),
                 ),
                 SizedBox(width: 10),
+
                 // Add Workout button
                 Expanded(
                   child: GestureDetector(
-                    onTap: saveWorkout,
+                    onTap: isLoading ? null : saveWorkout,
                     child: Container(
                       padding: EdgeInsets.symmetric(vertical: 15),
                       decoration: BoxDecoration(
                         border: Border.all(color: Colors.black),
                       ),
                       child: Center(
-                        child: Text(
+                        child: isLoading
+                            ? SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                        : Text(
                           'Add Workout',
                           style: TextStyle(fontSize: 16, color: Colors.black),
                         ),
