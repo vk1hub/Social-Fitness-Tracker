@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'chart_screen.dart';
 import 'workout_screen.dart';
 import 'workout_model.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'profile_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class MyHomePage extends StatefulWidget {
   @override
@@ -17,12 +17,14 @@ class MyHomePageState extends State<MyHomePage> {
 
   // List to store all workouts
   List<WorkoutModel> workouts = [];
+  String userId = '';
 
   PageController pageController = PageController();
 
   @override
   void initState() {
     super.initState();
+    userId = FirebaseAuth.instance.currentUser!.uid;
     loadWorkouts();
   }
 
@@ -33,64 +35,85 @@ class MyHomePageState extends State<MyHomePage> {
   }
 
   void loadWorkouts() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
+    try {
+      QuerySnapshot snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('workouts')
+          .orderBy('date', descending: true)
+          .get();
 
-    // get saved lists
-    List<String>? types = prefs.getStringList('workout_types');
-    List<String>? names = prefs.getStringList('workout_names');
-    List<String>? details = prefs.getStringList('workout_details');
-    List<String>? dates = prefs.getStringList('workout_dates');
+      List<WorkoutModel> loadedWorkouts = [];
+      for (var doc in snapshot.docs) {
+        loadedWorkouts.add(WorkoutModel.fromMap(
+          doc.data() as Map<String, dynamic>,
+          doc.id,
+        ));
+      }
 
-    // to stop crashing from no info
-    if (types == null || names == null || details == null || dates == null) {
-      return;
+      setState(() {
+        workouts = loadedWorkouts;
+      });
+    } catch (e) {
+      print('Error loading workouts: $e');
     }
-
-    // Build workouts from the lists
-    List<WorkoutModel> loadedWorkouts = [];
-    for (int i = 0; i < types.length; i++) {
-      WorkoutModel workout = WorkoutModel(
-        type: types[i],
-        name: names[i],
-        details: details[i],
-        date: DateTime.parse(dates[i]),
-      );
-      loadedWorkouts.add(workout);
-    }
-
-    setState(() {
-      workouts = loadedWorkouts;
-    });
   }
 
-  void saveWorkouts() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
+  Future<void> addWorkout(WorkoutModel workout) async {
+    try {
+      DocumentReference docRef = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('workouts')
+          .add(workout.toMap());
 
-    List<String> types = [];
-    List<String> names = [];
-    List<String> details = [];
-    List<String> dates = [];
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .update({
+        'workoutsCount': FieldValue.increment(1),
+      });
 
-    // Fill the lists with data from workouts
-    for (int i = 0; i < workouts.length; i++) {
-      types.add(workouts[i].type);
-      names.add(workouts[i].name);
-      details.add(workouts[i].details);
-      dates.add(workouts[i].date.toString());
+      setState(() {
+        workouts.insert(0, WorkoutModel(
+          type: workout.type,
+          name: workout.name,
+          details: workout.details,
+          date: workout.date,
+          photoUrl: workout.photoUrl,
+          workoutId: docRef.id,
+        ));
+      });
+
+    } catch (e) {
+      print('Error adding workout: $e');
     }
-
-    await prefs.setStringList('workout_types', types);
-    await prefs.setStringList('workout_names', names);
-    await prefs.setStringList('workout_details', details);
-    await prefs.setStringList('workout_dates', dates);
   }
 
-  // Function to add a workout
-  void addWorkout(WorkoutModel workout) {
-    setState(() {
-      workouts.add(workout);
-    });
-    saveWorkouts();
+  Future<void> deleteWorkout(WorkoutModel workout) async {
+    try {
+      if (workout.workoutId != null) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userId)
+            .collection('workouts')
+            .doc(workout.workoutId)
+            .delete();
+
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userId)
+            .update({
+          'workoutsCount': FieldValue.increment(-1),
+        });
+      }
+
+      setState(() {
+        workouts.remove(workout);
+      });
+    } catch (e) {
+      print('Error deleting workout: $e');
+    }
   }
 
   @override
@@ -100,10 +123,10 @@ class MyHomePageState extends State<MyHomePage> {
       WorkoutScreen(
         workouts: workouts,
         onAddWorkout: addWorkout,
-        onDeleteWorkout: saveWorkouts,
+        onDeleteWorkout: deleteWorkout,
       ),
       ChartScreen(workouts: workouts),
-      ProfileScreen(userId: FirebaseAuth.instance.currentUser!.uid),  // NEW: Add profile screen
+      ProfileScreen(userId: userId),
     ];
 
     return Scaffold(
@@ -143,7 +166,7 @@ class MyHomePageState extends State<MyHomePage> {
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
             label: 'Profile',
-          ),  // NEW: Add profile tab
+          ),
         ],
       ),
     );
