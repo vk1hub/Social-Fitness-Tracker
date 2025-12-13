@@ -5,6 +5,7 @@ import 'workout_model.dart';
 import 'profile_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'social_screen.dart';
 
 class MyHomePage extends StatefulWidget {
   @override
@@ -120,6 +121,7 @@ class MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     // list of screens - pass workouts to all screens that need it
     final List<Widget> screens = [
+      SocialScreen(),
       WorkoutScreen(
         workouts: workouts,
         onAddWorkout: addWorkout,
@@ -142,6 +144,7 @@ class MyHomePageState extends State<MyHomePage> {
 
       // Bottom navigation bar for switching between screens
       bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
         currentIndex: currentPage,
         onTap: (index) {
           setState(() {
@@ -155,6 +158,10 @@ class MyHomePageState extends State<MyHomePage> {
         },
         // Bottom navigation tabs
         items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.people_alt_rounded),
+            label: 'Social',
+          ),
           BottomNavigationBarItem(
             icon: Icon(Icons.fitness_center),
             label: 'Workouts',
