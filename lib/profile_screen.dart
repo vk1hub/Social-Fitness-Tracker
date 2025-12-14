@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'login_screen.dart';
+import 'photo_journal_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String userId;
@@ -19,7 +20,16 @@ class ProfileScreenState extends State<ProfileScreen> {
       appBar: AppBar(
         title: Text('Profile'),
         actions: [
-          if (widget.userId == FirebaseAuth.instance.currentUser!.uid)
+          if (widget.userId == FirebaseAuth.instance.currentUser!.uid) ...[
+            IconButton(
+              icon: Icon(Icons.photo_library),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => PhotoJournalScreen()),
+                );
+              },
+            ),
             IconButton(
               icon: Icon(Icons.logout),
               onPressed: () async {
@@ -31,6 +41,7 @@ class ProfileScreenState extends State<ProfileScreen> {
                 );
               },
             ),
+          ],
         ],
       ),
       body: FutureBuilder<DocumentSnapshot>(
