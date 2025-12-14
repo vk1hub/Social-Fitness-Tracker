@@ -235,7 +235,18 @@ class SocialScreenState extends State<SocialScreen> {
                         SizedBox(width: 4),
                         Text('${postData['likesCount'] ?? 0}'),
                         SizedBox(width: 20),
-                        Icon(Icons.comment, size: 20),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    CommentsScreen(postId: post.id),
+                              ),
+                            );
+                          },
+                          child: Icon(Icons.comment, size: 20),
+                        ),
                         SizedBox(width: 4),
                         Text('${postData['commentsCount'] ?? 0}'),
                       ],
