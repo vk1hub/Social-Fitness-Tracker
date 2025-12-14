@@ -1,3 +1,4 @@
+import 'package:fitness_tracker_application/challenges_screen.dart';
 import 'package:flutter/material.dart';
 import 'chart_screen.dart';
 import 'workout_screen.dart';
@@ -6,6 +7,7 @@ import 'profile_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'social_screen.dart';
+import 'challenges_screen.dart';
 
 class MyHomePage extends StatefulWidget {
   @override
@@ -46,10 +48,9 @@ class MyHomePageState extends State<MyHomePage> {
 
       List<WorkoutModel> loadedWorkouts = [];
       for (var doc in snapshot.docs) {
-        loadedWorkouts.add(WorkoutModel.fromMap(
-          doc.data() as Map<String, dynamic>,
-          doc.id,
-        ));
+        loadedWorkouts.add(
+          WorkoutModel.fromMap(doc.data() as Map<String, dynamic>, doc.id),
+        );
       }
 
       setState(() {
@@ -68,24 +69,23 @@ class MyHomePageState extends State<MyHomePage> {
           .collection('workouts')
           .add(workout.toMap());
 
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .update({
+      await FirebaseFirestore.instance.collection('users').doc(userId).update({
         'workoutsCount': FieldValue.increment(1),
       });
 
       setState(() {
-        workouts.insert(0, WorkoutModel(
-          type: workout.type,
-          name: workout.name,
-          details: workout.details,
-          date: workout.date,
-          photoUrl: workout.photoUrl,
-          workoutId: docRef.id,
-        ));
+        workouts.insert(
+          0,
+          WorkoutModel(
+            type: workout.type,
+            name: workout.name,
+            details: workout.details,
+            date: workout.date,
+            photoUrl: workout.photoUrl,
+            workoutId: docRef.id,
+          ),
+        );
       });
-
     } catch (e) {
       print('Error adding workout: $e');
     }
@@ -101,12 +101,9 @@ class MyHomePageState extends State<MyHomePage> {
             .doc(workout.workoutId)
             .delete();
 
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(userId)
-            .update({
-          'workoutsCount': FieldValue.increment(-1),
-        });
+        await FirebaseFirestore.instance.collection('users').doc(userId).update(
+          {'workoutsCount': FieldValue.increment(-1)},
+        );
       }
 
       setState(() {
@@ -122,6 +119,7 @@ class MyHomePageState extends State<MyHomePage> {
     // list of screens - pass workouts to all screens that need it
     final List<Widget> screens = [
       SocialScreen(),
+      ChallengesScreen(),
       WorkoutScreen(
         workouts: workouts,
         onAddWorkout: addWorkout,
@@ -163,6 +161,10 @@ class MyHomePageState extends State<MyHomePage> {
             label: 'Social',
           ),
           BottomNavigationBarItem(
+            icon: Icon(Icons.emoji_events),
+            label: 'Challenges',
+          ),
+          BottomNavigationBarItem(
             icon: Icon(Icons.fitness_center),
             label: 'Workouts',
           ),
@@ -170,10 +172,7 @@ class MyHomePageState extends State<MyHomePage> {
             icon: Icon(Icons.show_chart),
             label: 'Progress',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
       ),
     );
