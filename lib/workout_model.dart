@@ -1,10 +1,10 @@
 class WorkoutModel {
-  final String type;
-  final String name;
-  final String details;
-  final DateTime date;
-  final String? photoUrl;
-  final String? workoutId;
+  final String type; // type of exercise (biking, running, etc)
+  final String name; // name of workout
+  final String details; // details of workout
+  final DateTime date; // date of workout
+  final String? photoUrl; // optional photo
+  final String? workoutId; // firestore ID
 
   WorkoutModel({
     required this.type,
@@ -15,6 +15,7 @@ class WorkoutModel {
     this.workoutId,
   });
 
+  // sending data to firestore
   Map<String, dynamic> toMap() {
     return {
       'type': type,
@@ -25,6 +26,7 @@ class WorkoutModel {
     };
   }
 
+  // turning firestore data back to workoutmodel
   factory WorkoutModel.fromMap(Map<String, dynamic> map, String id) {
     return WorkoutModel(
       type: map['type'] ?? '',
