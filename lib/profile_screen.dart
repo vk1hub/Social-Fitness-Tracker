@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String userId;
@@ -16,6 +18,20 @@ class ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Profile'),
+        actions: [
+          if (widget.userId == FirebaseAuth.instance.currentUser!.uid)
+            IconButton(
+              icon: Icon(Icons.logout),
+              onPressed: () async {
+                await FirebaseAuth.instance.signOut();
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => LoginScreen()),
+                  (route) => false,
+                );
+              },
+            ),
+        ],
       ),
       body: FutureBuilder<DocumentSnapshot>(
         future: FirebaseFirestore.instance
@@ -58,7 +74,7 @@ class ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 SizedBox(height: 20),
-                
+
                 Center(
                   child: Text(
                     '$firstName $lastName',
@@ -66,7 +82,7 @@ class ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 SizedBox(height: 30),
-                
+
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
@@ -74,7 +90,10 @@ class ProfileScreenState extends State<ProfileScreen> {
                       children: [
                         Text(
                           '$postsCount',
-                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         Text('Posts'),
                       ],
@@ -83,7 +102,10 @@ class ProfileScreenState extends State<ProfileScreen> {
                       children: [
                         Text(
                           '$challengesCompleted',
-                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         Text('Challenges'),
                       ],
@@ -92,7 +114,10 @@ class ProfileScreenState extends State<ProfileScreen> {
                       children: [
                         Text(
                           '$workoutsCount',
-                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         Text('Workouts'),
                       ],
@@ -100,7 +125,7 @@ class ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
                 SizedBox(height: 30),
-                
+
                 Container(
                   width: double.infinity,
                   padding: EdgeInsets.all(16),
@@ -113,21 +138,24 @@ class ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       Text(
                         'Profile Information',
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       SizedBox(height: 15),
-                      
+
                       Text('Height: ${height.toInt()} inches'),
                       SizedBox(height: 8),
-                      
+
                       Text('Weight: ${currentWeight.toInt()} lbs'),
                       SizedBox(height: 8),
-                      
+
                       Text('Fitness Level: $fitnessLevel'),
                       SizedBox(height: 8),
-                      
+
                       Text('Goal: $goal'),
-                      
+
                       if (funFact.isNotEmpty) ...[
                         SizedBox(height: 15),
                         Text(
@@ -141,84 +169,86 @@ class ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 SizedBox(height: 30),
-              
-              Text(
-                'Recent Workouts',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 12),
-              
-              StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection('users')
-                    .doc(widget.userId)
-                    .collection('workouts')
-                    .orderBy('date', descending: true)
-                    .limit(5)
-                    .snapshots(),
-                builder: (context, workoutSnapshot) {
-                  if (workoutSnapshot.connectionState == ConnectionState.waiting) {
-                    return Center(child: CircularProgressIndicator());
-                  }
 
-                  if (!workoutSnapshot.hasData || workoutSnapshot.data!.docs.isEmpty) {
-                    return Center(
-                      child: Text('No workouts yet'),
-                    );
-                  }
+                Text(
+                  'Recent Workouts',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 12),
 
-                  return ListView.builder(
-                    shrinkWrap: true,
-                    physics: NeverScrollableScrollPhysics(),
-                    itemCount: workoutSnapshot.data!.docs.length,
-                    itemBuilder: (context, index) {
-                      var workout = workoutSnapshot.data!.docs[index];
-                      var workoutData = workout.data() as Map<String, dynamic>;
+                StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(widget.userId)
+                      .collection('workouts')
+                      .orderBy('date', descending: true)
+                      .limit(5)
+                      .snapshots(),
+                  builder: (context, workoutSnapshot) {
+                    if (workoutSnapshot.connectionState ==
+                        ConnectionState.waiting) {
+                      return Center(child: CircularProgressIndicator());
+                    }
 
-                      return Container(
-                        margin: EdgeInsets.only(bottom: 12),
-                        padding: EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.black),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              workoutData['type'] ?? '',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            SizedBox(height: 4),
-                            Text(
-                              workoutData['name'] ?? '',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            SizedBox(height: 4),
-                            Text(workoutData['details'] ?? ''),
-                            
-                            if (workoutData['photoUrl'] != null && workoutData['photoUrl'].isNotEmpty)
-                              Padding(
-                                padding: EdgeInsets.only(top: 12),
-                                child: Image.network(
-                                  workoutData['photoUrl'],
-                                  width: double.infinity,
-                                  height: 200,
-                                  fit: BoxFit.cover,
+                    if (!workoutSnapshot.hasData ||
+                        workoutSnapshot.data!.docs.isEmpty) {
+                      return Center(child: Text('No workouts yet'));
+                    }
+
+                    return ListView.builder(
+                      shrinkWrap: true,
+                      physics: NeverScrollableScrollPhysics(),
+                      itemCount: workoutSnapshot.data!.docs.length,
+                      itemBuilder: (context, index) {
+                        var workout = workoutSnapshot.data!.docs[index];
+                        var workoutData =
+                            workout.data() as Map<String, dynamic>;
+
+                        return Container(
+                          margin: EdgeInsets.only(bottom: 12),
+                          padding: EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.black),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                workoutData['type'] ?? '',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
-                          ],
-                        ),
-                      );
-                    },
-                  );
-                },
+                              SizedBox(height: 4),
+                              Text(
+                                workoutData['name'] ?? '',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              SizedBox(height: 4),
+                              Text(workoutData['details'] ?? ''),
+
+                              if (workoutData['photoUrl'] != null &&
+                                  workoutData['photoUrl'].isNotEmpty)
+                                Padding(
+                                  padding: EdgeInsets.only(top: 12),
+                                  child: Image.network(
+                                    workoutData['photoUrl'],
+                                    width: double.infinity,
+                                    height: 200,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        );
+                      },
+                    );
+                  },
                 ),
               ],
             ),
