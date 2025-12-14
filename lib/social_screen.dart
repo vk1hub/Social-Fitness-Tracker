@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'share_workout_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'profile_screen.dart';
 
 class SocialScreen extends StatefulWidget {
   @override
@@ -97,11 +98,24 @@ class SocialScreenState extends State<SocialScreen> {
                               ),
                             ),
                             SizedBox(width: 10),
-                            Text(
-                              postData['userName'] ?? 'Unknown',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ProfileScreen(
+                                      userId: postData['userId'],
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: Text(
+                                postData['userName'] ?? 'Unknown',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  decoration: TextDecoration.underline,
+                                ),
                               ),
                             ),
                           ],
