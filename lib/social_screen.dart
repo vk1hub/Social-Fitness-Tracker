@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'share_workout_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'profile_screen.dart';
+import 'comments_screen.dart';
 
 class SocialScreen extends StatefulWidget {
   @override
@@ -41,6 +42,32 @@ class SocialScreenState extends State<SocialScreen> {
           .update({'postsCount': FieldValue.increment(-1)});
     } catch (e) {
       print('Error deleting post: $e');
+    }
+  }
+
+  // liking a post function
+  Future<void> toggleLike(String postId) async {
+    String userId = FirebaseAuth.instance.currentUser!.uid;
+
+    try {
+      DocumentReference postRef = FirebaseFirestore.instance
+          .collection('posts')
+          .doc(postId);
+      DocumentReference likeRef = postRef.collection('likes').doc(userId);
+
+      DocumentSnapshot likeDoc = await likeRef.get();
+
+      if (likeDoc.exists) {
+        // Unlike
+        await likeRef.delete();
+        await postRef.update({'likesCount': FieldValue.increment(-1)});
+      } else {
+        // Like
+        await likeRef.set({'timestamp': FieldValue.serverTimestamp()});
+        await postRef.update({'likesCount': FieldValue.increment(1)});
+      }
+    } catch (e) {
+      print('Error toggling like: $e');
     }
   }
 
@@ -175,6 +202,44 @@ class SocialScreenState extends State<SocialScreen> {
                           fit: BoxFit.cover,
                         ),
                       ),
+
+                    SizedBox(height: 12),
+                    Row(
+                      children: [
+                        // adding like button
+                        StreamBuilder<DocumentSnapshot>(
+                          stream: FirebaseFirestore.instance
+                              .collection('posts')
+                              .doc(post.id)
+                              .collection('likes')
+                              .doc(FirebaseAuth.instance.currentUser!.uid)
+                              .snapshots(),
+                          builder: (context, likeSnapshot) {
+                            bool isLiked =
+                                likeSnapshot.hasData &&
+                                likeSnapshot.data!.exists;
+
+                            // like button
+                            return GestureDetector(
+                              onTap: () => toggleLike(post.id),
+                              child: Icon(
+                                isLiked
+                                    ? Icons.favorite
+                                    : Icons.favorite_border,
+                                size: 20,
+                                color: isLiked ? Colors.red : Colors.black,
+                              ),
+                            );
+                          },
+                        ),
+                        SizedBox(width: 4),
+                        Text('${postData['likesCount'] ?? 0}'),
+                        SizedBox(width: 20),
+                        Icon(Icons.comment, size: 20),
+                        SizedBox(width: 4),
+                        Text('${postData['commentsCount'] ?? 0}'),
+                      ],
+                    ),
                   ],
                 ),
               );
