@@ -149,7 +149,6 @@ class ChallengesScreenState extends State<ChallengesScreen> {
             }
           }
         }
-        // summing up biking distances
       } else if (challengeType == 'workouts') {
         progress = workouts.docs.length.toDouble();
       } else if (challengeType == 'streak') {
@@ -164,7 +163,6 @@ class ChallengesScreenState extends State<ChallengesScreen> {
             workoutDate.day,
           );
           bool alreadyAdded = false;
-          // checking for unique days
           for (var date in workoutDates) {
             if (date.year == workoutDay.year &&
                 date.month == workoutDay.month &&
@@ -178,36 +176,24 @@ class ChallengesScreenState extends State<ChallengesScreen> {
           }
         }
         workoutDates.sort((a, b) => b.compareTo(a));
-        DateTime today = DateTime.now();
-        DateTime checkDay = DateTime(today.year, today.month, today.day);
-        int streak = 0;
-        // counting consecutive days
-        for (var workoutDay in workoutDates) {
-          if (workoutDay.year == checkDay.year &&
-              workoutDay.month == checkDay.month &&
-              workoutDay.day == checkDay.day) {
-            streak++;
-            checkDay = checkDay.subtract(Duration(days: 1));
-          } else if (streak > 0) {
-            break;
-          } else {
-            DateTime yesterday = DateTime(
-              today.year,
-              today.month,
-              today.day,
-            ).subtract(Duration(days: 1));
 
-            // weekly streak logic
-            if (workoutDay.year == yesterday.year &&
-                workoutDay.month == yesterday.month &&
-                workoutDay.day == yesterday.day) {
-              streak++;
-              checkDay = yesterday.subtract(Duration(days: 1));
-            } else {
-              break;
-            }
+        if (workoutDates.isEmpty) return 0;
+
+        int streak = 1;
+        DateTime currentDate = workoutDates[0];
+
+        for (int i = 1; i < workoutDates.length; i++) {
+          DateTime previousDate = workoutDates[i];
+          int daysBetween = currentDate.difference(previousDate).inDays;
+
+          if (daysBetween == 1) {
+            streak++;
+            currentDate = previousDate;
+          } else {
+            break;
           }
         }
+
         progress = streak.toDouble();
       }
     } catch (e) {
